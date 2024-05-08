@@ -6,11 +6,11 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     AWS_REGION: str = "us-east-1"
     ENV: str = "dev"
-    CERTIFICATE_ARN: str
-    BASE_URL: str
-    SECURITY_GROUP_ID: str
-    SUBNET_1: str
-    SUBNET_2: str
+    CERTIFICATE_ARN: str = None
+    BASE_URL: str = None
+    SECURITY_GROUP_ID: str = None
+    SUBNET_1: str = None
+    SUBNET_2: str = None
 
     class Config:
         env_file = ".env"
@@ -18,4 +18,5 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    return settings
