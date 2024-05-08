@@ -24,11 +24,19 @@ class SubscriptionService:
         if not id and not email:
             raise ValueError("Id or email is required to find subscription.")
 
-        key = {"id": id} if id else {"email": email}
-        response = self.table.get_item(Key=key)
-        item = response.get("Item")
-        if not item:
-            return {"message": f"Could not find subscription {id}"}
+        if id:
+            item = self.table.get_item(Key={"id": id}).get("Item")
+            if not item:
+                return {"message": f"Could not find subscription {id}"}
+        else:
+            # TODO fix query by GSI
+            item = self.table.query(
+                IndexName="email-index",
+                ExpressionAttributeValues={":email": {"S": email}},
+                KeyConditionExpression="email = :email",
+            ).get("Item")
+            if not item:
+                return {"message": f"Could not find subscription {email}"}
 
         subscription = Subscription(**item)
         return subscription
