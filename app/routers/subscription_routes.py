@@ -1,8 +1,7 @@
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from app.core import auth
 from app.core.models import Subscription, Action
 from app.subscription.subscription_service import SubscriptionService
 
@@ -25,8 +24,8 @@ router = APIRouter(prefix="/api/v1", tags=["Manage Subscriptions"])
         },
     },
 )
-def get_subscriptions(id: str=None, email: str=None, client: str = Depends(auth.validate_api_key)):
-    logger.info(f"Received request from {client} for user {id}, email {email}")
+def get_subscriptions(id: str = None, email: str = None):
+    logger.info(f"Received request for user {id}, email {email}")
     subscription_service = SubscriptionService()
     result = subscription_service.get_subscription(id, email)
     return result

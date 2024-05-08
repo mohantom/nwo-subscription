@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SubscriptionService:
 
-    def get_subscription(self, id: str=None, email: str=None) -> Subscription | dict:
+    def get_subscription(self, id: str = None, email: str = None) -> Subscription | dict:
         """
         Get user's active subscriptions by id or email
         :param id: user id

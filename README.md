@@ -53,3 +53,14 @@ curl --location --request PUT 'http://localhost:8001/api/v1/subscription' \
 curl --location --request DELETE 'http://localhost:8001/api/v1/subscription?id=648a3f89-d473-4fb6-b8d4-6ed9d5c47516' \
 --header 'x-api-key;'
 ```
+
+
+## Dev Deployment
+Run GitHub actions `Deploy Lambda Dev` to deploy this to AWS.
+[The base url for dev](https://xh8poj7mw3.execute-api.us-east-1.amazonaws.com/dev)
+
+You will need api key to invoke it.
+```commandline
+curl --location 'https://xh8poj7mw3.execute-api.us-east-1.amazonaws.com/dev/api/v1/subscription?id=648a3f89-d473-4fb6-b8d4-6ed9d5c47516' \
+--header 'x-api-key: xxxxxx'
+```
