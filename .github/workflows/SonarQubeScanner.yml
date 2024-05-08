@@ -20,6 +20,6 @@ jobs:
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
       with:
         args: >
-         -Dsonar.projectKey=discern-api-backend-dev-github
-         -Dsonar.projectName=discern-api-backend-dev-github
+         -Dsonar.projectKey=nwo-api-backend-dev-github
+         -Dsonar.projectName=nwo-api-backend-dev-github
  

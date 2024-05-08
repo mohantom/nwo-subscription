@@ -1,7 +1,6 @@
 import logging
 
 from fastapi import APIRouter, Depends
-from fastapi import Request
 
 from app.core import auth
 from app.core.models import Subscription, Action
@@ -17,10 +16,10 @@ router = APIRouter(prefix="/api/v1", tags=["Manage Subscriptions"])
     name="Get active subscriptions for a user",
     responses={
         200: {
-            "description": "Win rate by query conditions",
+            "description": "Get active subscriptions",
             "content": {
                 "application/json": {
-                    "example": {"email": "wtang6@gmail.com", "start_date": "2024-05-07T22:52:00", "subscriptions": []},
+                    "example": {"email": "wtang6@gmail.com", "start_date": "2024-05-07", "industries": ["Consumer"]},
                 }
             },
         },
@@ -29,12 +28,27 @@ router = APIRouter(prefix="/api/v1", tags=["Manage Subscriptions"])
 def get_subscriptions(id: str, client: str = Depends(auth.validate_api_key)):
     logger.info(f"Received request from {client} for user {id}")
     subscription_service = SubscriptionService()
-    data = subscription_service.get_subscription("")
-    return {"data": data}
+    result = subscription_service.get_subscription(id)
+    return result
 
 
 @router.post("/subscription", name="Save Subscription")
-def save_subscription(subscription: Subscription, action: Action):
+def add_subscription(subscription: Subscription):
     subscription_service = SubscriptionService()
-    data = subscription_service.save_subscription(action, subscription)
-    return {"data": data}
+    result = subscription_service.handle_subscription(Action.Subscribe, subscription)
+    return result
+
+
+@router.put("/subscription", name="Save Subscription")
+def update_subscription(subscription: Subscription):
+    subscription_service = SubscriptionService()
+    result = subscription_service.handle_subscription(Action.Update, subscription)
+    return result
+
+
+@router.delete("/subscription", name="Save Subscription")
+def delete_subscription(id: str):
+    subscription_service = SubscriptionService()
+    subscription = Subscription(id=id)
+    result = subscription_service.handle_subscription(Action.Unsubscribe, subscription)
+    return {"data": result}

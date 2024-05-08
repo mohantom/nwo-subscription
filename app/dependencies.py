@@ -4,7 +4,7 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    DISCERN_ENV: str = "dev"
+    ENV: str = "dev"
     AWS_REGION: str = "us-east-1"
     CERTIFICATE_ARN: str
     WEBSERVICE_BASE_URL: str

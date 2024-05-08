@@ -8,7 +8,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.routers import subscription_routes
 
-app = FastAPI(title="Discern API")
+app = FastAPI(title="NWO API")
 
 app.add_middleware(
     CORSMiddleware,

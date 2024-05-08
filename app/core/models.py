@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 
 
 class Action(str, Enum):
@@ -31,17 +31,10 @@ class Subcategory(str, Enum):
 
 
 class Subscription(BaseModel):
-    email: str
     id: str = str(uuid.uuid4())
+    email: str = None
     start_date: str = datetime.utcnow().isoformat()[:10]
     end_date: str = None
     industries: list[Industry] = None
     sources: list[Source] = None
     subcategories: list[Subcategory] = None
-
-    @model_validator(mode="after")
-    def validate_payload(self, values):
-        if not self.email:
-            raise ValueError("Email is required")
-
-        return values

@@ -3,8 +3,6 @@ import uuid
 from dataclasses import dataclass
 from functools import cached_property
 
-from boto3.dynamodb import conditions
-
 from app.core.boto_handler import BotoHandler
 from app.core.constants import ACTIVE_ENDDATE
 from app.core.models import Subscription, Action
@@ -16,62 +14,82 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SubscriptionService:
 
-    def get_subscription(self, email: str) -> Subscription:
+    def get_subscription(self, id: str) -> Subscription | dict:
         """
         Get user's active subscriptions
-        :param email: user's email
-        :return: subscrption
+        :param id: user id
+        :return: subscription
         """
-        response = self.table.query(
-            KeyConditionExpression=conditions.Key("email").eq(email) & conditions.Key("end_date").eq(ACTIVE_ENDDATE)
-        )
+        response = self.table.get_item(Key={"id": id})
+        item = response.get("Item")
+        if not item:
+            return {"message": f"Could not find subscription {id}"}
 
-        subscription = response["Items"][0] if response["Items"] else None
+        subscription = Subscription(**item)
         return subscription
 
-    def save_subscription(self, action: Action, subscription: Subscription):
+    def handle_subscription(self, action: Action, subscription: Subscription):
         """
         Handle user's request for subscribe, unsubscribe and update subscription
         :param subscription: subscription details
         :return:
         """
-        if action in [Action.Unsubscribe, Action.Update]:
-            self.unsubscribe(subscription)
+        match action:
+            case Action.Subscribe:
+                return self.save_item(subscription)
+            case Action.Update:
+                self.archive_item(subscription.id)
+                return self.save_item(subscription)
+            case Action.Unsubscribe:
+                return self.archive_item(subscription.id)
+            case _:
+                raise ValueError(f"Unsupported action: {action}")
 
-        if action == Action.Unsubscribe:
-            return
-
-        self.subscribe(subscription)
-        return
-
-    def unsubscribe(self, subscription: Subscription):
-        existing_subscription = self.get_subscription(subscription.id)
+    def archive_item(self, id: str) -> dict:
+        existing_subscription = self.get_subscription(id)
         if not existing_subscription:
-            logger.info(f"Could not find active subscription for {subscription.id}")
-            return
+            message = f"Could not find active subscription for {id}"
+            logger.warning(f"Could not find active subscription for {id}")
+            return {"message": message}
 
         logger.info("Found existing subscription. Marking it as inactive...")
-        expression = "SET end_date = :end_date"
-        expression_values = {":end_date": get_today()}
-        response = self.table.update_item(
-            Key={"id": subscription.id, "end_date": ACTIVE_ENDDATE},
-            UpdateExpression=expression,
-            ExpressionAttributeValues=expression_values,
-            ReturnValues="UPDATED_NEW",
-        )
-        if not response:
-            raise Exception("Failed to mark current subscription as inactive.")
 
-        logger.info(f"Successfully unsubscribed for {subscription.email}")
+        existing_subscription.end_date = get_today()
+        self.save_item(existing_subscription, self.table_archive)
+        # TODO handle exceptions
+        self.table.delete_item(Key={"id": id})
 
-    def subscribe(self, subscription):
+        message = f"Successfully unsubscribed for {id}"
+        logger.info(message)
+        return {"message": message}
+
+    def save_item(self, subscription: Subscription, table=None) -> dict:
+        table = table or self.table
         if not subscription.id:
             subscription.id = str(uuid.uuid4())
 
         logger.info(f"Adding new subscription for {subscription.id}")
-        expression = "SET email = :email"
-        expression_values = {":email": subscription.email}
+        expression, expression_values = self.create_item_expressions(subscription)
 
+        # TODO handle exceptions
+        table.update_item(
+            Key={"id": subscription.id},
+            UpdateExpression=expression,
+            ExpressionAttributeValues=expression_values,
+            ReturnValues="UPDATED_NEW",
+        )
+
+        message = f"Successfully added/updated subscription for {subscription.id}"
+        logger.info(message)
+        return {"message": message}
+
+    def create_item_expressions(self, subscription) -> tuple[str, dict]:
+        expression = "SET email = :email, start_date = :start_date, end_date = :end_date, "
+        expression_values = {
+            ":email": subscription.email,
+            ":start_date": subscription.start_date,
+            ":end_date": ACTIVE_ENDDATE,
+        }
         if subscription.industries is not None:
             expression += "industries = :industries, "
             expression_values[":industries"] = subscription.industries
@@ -83,15 +101,7 @@ class SubscriptionService:
             expression_values[":subcategories"] = subscription.subcategories
         if expression.endswith(", "):
             expression = expression[:-2]
-
-        response = self.table.update_item(
-            Key={"email": subscription.id, "end_date": "2199-12-31"},
-            UpdateExpression=expression,
-            ExpressionAttributeValues=expression_values,
-            ReturnValues="UPDATED_NEW",
-        )
-        logger.info(f"Successfully added subscription for {subscription.email}")
-        return response
+        return expression, expression_values
 
     @cached_property
     def dynamodb_client(self):
@@ -104,6 +114,12 @@ class SubscriptionService:
 
     @cached_property
     def table(self):
-        table_name = self.configs.get("subscription_table_name", "subscriptions")
+        table_name = self.configs.get("subscription_table_name", "nwo_subscriptions")
+        table = self.dynamodb_client.Table(table_name)
+        return table
+
+    @cached_property
+    def table_archive(self):
+        table_name = self.configs.get("subscription_archive_table_name", "nwo_subscriptions_archive")
         table = self.dynamodb_client.Table(table_name)
         return table
