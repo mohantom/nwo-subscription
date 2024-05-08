@@ -14,13 +14,18 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SubscriptionService:
 
-    def get_subscription(self, id: str) -> Subscription | dict:
+    def get_subscription(self, id: str=None, email: str=None) -> Subscription | dict:
         """
-        Get user's active subscriptions
+        Get user's active subscriptions by id or email
         :param id: user id
+        :param email: email address
         :return: subscription
         """
-        response = self.table.get_item(Key={"id": id})
+        if not id and not email:
+            raise ValueError("Id or email is required to find subscription.")
+
+        key = {"id": id} if id else {"email": email}
+        response = self.table.get_item(Key=key)
         item = response.get("Item")
         if not item:
             return {"message": f"Could not find subscription {id}"}
@@ -36,6 +41,11 @@ class SubscriptionService:
         """
         match action:
             case Action.Subscribe:
+                existing_subscription = self.get_subscription(subscription.id)
+                if isinstance(existing_subscription, Subscription):
+                    return {"message": f"Please use PUT to update existing subscription for {subscription.id}."}
+
+                # TODO verify email address
                 return self.save_item(subscription)
             case Action.Update:
                 self.archive_item(subscription.id)
@@ -47,15 +57,15 @@ class SubscriptionService:
 
     def archive_item(self, id: str) -> dict:
         existing_subscription = self.get_subscription(id)
-        if not existing_subscription:
+        if not isinstance(existing_subscription, Subscription):
             message = f"Could not find active subscription for {id}"
             logger.warning(f"Could not find active subscription for {id}")
             return {"message": message}
 
         logger.info("Found existing subscription. Marking it as inactive...")
 
-        existing_subscription.end_date = get_today()
-        self.save_item(existing_subscription, self.table_archive)
+        archive_subscription = Subscription(**{**existing_subscription.__dict__, "end_date": get_today()})
+        self.save_item(archive_subscription, self.table_archive)
         # TODO handle exceptions
         self.table.delete_item(Key={"id": id})
 
@@ -68,7 +78,7 @@ class SubscriptionService:
         if not subscription.id:
             subscription.id = str(uuid.uuid4())
 
-        logger.info(f"Adding new subscription for {subscription.id}")
+        logger.info(f"Adding/Updating new subscription for {subscription.id}")
         expression, expression_values = self.create_item_expressions(subscription)
 
         # TODO handle exceptions

@@ -25,10 +25,10 @@ router = APIRouter(prefix="/api/v1", tags=["Manage Subscriptions"])
         },
     },
 )
-def get_subscriptions(id: str, client: str = Depends(auth.validate_api_key)):
-    logger.info(f"Received request from {client} for user {id}")
+def get_subscriptions(id: str=None, email: str=None, client: str = Depends(auth.validate_api_key)):
+    logger.info(f"Received request from {client} for user {id}, email {email}")
     subscription_service = SubscriptionService()
-    result = subscription_service.get_subscription(id)
+    result = subscription_service.get_subscription(id, email)
     return result
 
 

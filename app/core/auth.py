@@ -26,3 +26,8 @@ def validate_api_key(api_key: str = Security(api_key_header)) -> str:
             all_api_keys[item["value"]] = item["name"]
 
     return all_api_keys[api_key]
+
+
+def verify_email_address(email: str):
+    # TODO
+    pass

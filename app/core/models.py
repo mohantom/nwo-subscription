@@ -35,6 +35,6 @@ class Subscription(BaseModel):
     email: str = None
     start_date: str = datetime.utcnow().isoformat()[:10]
     end_date: str = None
-    industries: list[Industry] = None
-    sources: list[Source] = None
-    subcategories: list[Subcategory] = None
+    industries: list[Industry] | None = None
+    sources: list[Source] | None = None
+    subcategories: list[Subcategory] | None = None
