@@ -36,6 +36,7 @@ functions:
     package:
       patterns:
         - "main.py"
+        - ".env"
         - "!requirements.txt"
         - "!requirements-ecs.txt"
         - "!package.json"
