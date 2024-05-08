@@ -1,16 +1,16 @@
 from functools import lru_cache
 
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    ENV: str = "dev"
     AWS_REGION: str = "us-east-1"
+    ENV: str = "dev"
     CERTIFICATE_ARN: str
-    WEBSERVICE_BASE_URL: str
-    USERPOOL_ID: str
-    CLIENT_ID: str
-    SECRETS_KEY: str
+    BASE_URL: str
+    SECURITY_GROUP_ID: str
+    SUBNET_1: str
+    SUBNET_2: str
 
     class Config:
         env_file = ".env"

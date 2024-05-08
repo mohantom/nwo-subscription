@@ -2,10 +2,11 @@ import os
 from datetime import datetime
 
 from app.core.boto_handler import SecretsManager
+from app.dependencies import get_settings
 
 
 def get_all_configs(env=None) -> dict:
-    env = env or os.getenv("env") or os.getenv("ENV")
+    env = env or os.getenv("env") or os.getenv("ENV") or get_settings().ENV
     secret_id = f"{env}/webservice/config"
 
     secrets = SecretsManager.extract_secrets(secret_id)
