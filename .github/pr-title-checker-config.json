@@ -1,0 +1,9 @@
+{
+  "LABEL": {
+    "name": "PR title format 'WEB-000 description'",
+    "color": "EEEEEE"
+  },
+  "CHECKS": {
+    "regexp": "^WEB-[0-9]+[:]? .*"
+  }
+}

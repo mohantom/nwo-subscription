@@ -1,0 +1,46 @@
+name: 'Pull Request Checks'
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled]
+
+permissions:
+  pull-requests: write
+  contents: write
+
+jobs:
+  auto-assign-author:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: toshimaru/auto-author-assign@v1.4.0
+        with:
+          repo-token: '${{ secrets.GITHUB_TOKEN }}'
+
+  check-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: thehanimo/pr-title-checker@v1.3.4
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  check-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: mheap/github-action-required-labels@v1
+        with:
+          mode: exactly
+          count: 1
+          labels: 'patch, minor, major'
+
+  add-jira-labels:
+    runs-on: ubuntu-latest
+    name: Label Pull Request with Jira properties
+    steps:
+      - name: Label with JIRA issue properties
+        uses: xserrat/pr-jira-properties-labeler@v1.0.0
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JIRA_ENCODED_TOKEN: ${{ secrets.JIRA_ENCODED_TOKEN }}
+          JIRA_URI: ${{ secrets.JIRA_URI }}
+          regexp_jira_issue_code_on_pr_title: '^(WEB-[0-9]{2,6}).*'
+          issue_properties: '[priority]'

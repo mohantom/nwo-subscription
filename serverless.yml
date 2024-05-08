@@ -1,0 +1,59 @@
+service: nwo-subscription-service
+
+useDotenv: true
+
+package:
+  individually: true
+
+provider:
+  name: aws
+  runtime: python3.11
+  endpointType: REGIONAL
+  region: ${env:AWS_REGION, "us-east-1"}
+  stage: ${opt:stage, "dev"}
+  vpc:
+    securityGroupIds:
+      - ${env:SECURITY_GROUP_ID}
+    subnetIds:
+      - ${env:SUBNET_1}
+      - ${env:SUBNET_2}
+
+plugins:
+  - serverless-python-requirements
+  - serverless-dotenv-plugin
+
+custom:
+  dotenv:
+    include: [ env ]
+
+  pythonRequirements:
+    dockerizePip: true
+    slim: true
+
+
+functions:
+  app:
+    package:
+      patterns:
+        - "main.py"
+        - "!requirements.txt"
+        - "!requirements-ecs.txt"
+        - "!package.json"
+        - "!package-lock.json"
+        - "!.github/**"
+        - "!.serverless/**"
+        - "!venv/**"
+        - "!.venv/**"
+        - "!.virtualenv/**"
+        - "!.pytest_cache/**"
+        - "!node_modules/**"
+        - "!config/**"
+        - "!tests/**"
+
+    handler: main.handler
+    environment:
+      STAGE: ${self:provider.stage}
+    events:
+      - http:
+          method: any
+          path: /{proxy+}

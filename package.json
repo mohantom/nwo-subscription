@@ -1,0 +1,12 @@
+{
+    "name": "nwo-subscription-service",
+    "version": "0.0.1",
+    "author": "nwo",
+    "dependencies": {
+        "serverless-dotenv-plugin": "^6.0.0"
+    },
+    "devDependencies": {
+        "serverless-domain-manager": "^7.3.8",
+        "serverless-python-requirements": "^6.1.0"
+    }
+}

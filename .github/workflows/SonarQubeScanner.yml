@@ -1,0 +1,25 @@
+# This is a basic workflow to help you get started with Actions
+
+name: SonnarQube Scanner
+# to run once in a day
+on:
+  workflow_dispatch:
+  schedule:
+  - cron: "0 0 * * *"
+  
+jobs:
+  sonarQubeTrigger:
+    name: SonarQube Trigger
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@v1.1.0
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      with:
+        args: >
+         -Dsonar.projectKey=discern-api-backend-dev-github
+         -Dsonar.projectName=discern-api-backend-dev-github
+ 
